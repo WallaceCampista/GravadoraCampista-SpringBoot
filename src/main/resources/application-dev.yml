@@ -33,6 +33,9 @@ api:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
 
+  # popula um banco vazio com bandas, álbuns e músicas de exemplo
+  dados-exemplo: ${DADOS_EXEMPLO:true}
+
 server:
   error:
     include-exception: true

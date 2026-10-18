@@ -29,6 +29,12 @@ API em Java Spring Boot que simula uma gravadora de música: cadastro de bandas,
    A API sobe em `http://localhost:8080` e as tabelas são criadas automaticamente.
 3. Entre com o admin padrão: usuário `admin`, senha `Admin@123`. Ele é criado na inicialização sempre que não existe nenhum admin.
 
+Com o banco vazio (nenhuma banda cadastrada, nem excluída), a API também cria dados de exemplo: 4 bandas fictícias, com álbuns, músicas e avaliações, para a home "TOP 3" já abrir preenchida. Para começar com o banco vazio, suba com `DADOS_EXEMPLO=false`. A carga leva um ou dois segundos depois da linha `Started ...` no log; se a API for interrompida nesse meio-tempo, os dados ficam pela metade e a carga não roda de novo. Nesse caso, recrie o banco:
+
+```bash
+docker exec mysql-gravadora mysql -uroot -proot -e "DROP DATABASE bancogravadora; CREATE DATABASE bancogravadora;"
+```
+
 ## Configuração
 
 Todos os valores têm um padrão para desenvolvimento local e podem ser trocados por variáveis de ambiente:
@@ -40,6 +46,7 @@ Todos os valores têm um padrão para desenvolvimento local e podem ser trocados
 | `JWT_SECRET` | `my-secret-key` | Chave de assinatura dos tokens |
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` / `ADMIN_EMAIL` | `admin` / `Admin@123` / `admin@gravadoracampista.com` | Admin criado na inicialização |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:4200` | Origens do frontend liberadas (separe por vírgula) |
+| `DADOS_EXEMPLO` | `true` | Cria bandas, álbuns e músicas de exemplo quando o banco está vazio |
 
 ## Autenticação
 
