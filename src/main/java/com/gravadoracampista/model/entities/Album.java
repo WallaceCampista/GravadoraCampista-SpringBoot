@@ -20,11 +20,11 @@ public class Album {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long albumId;
 
-  @Column(name = "Nome_Album", unique = true)
-  @Size(min = 4, max = 50)
+  @Column(name = "Nome_Album")
+  @Size(min = 1, max = 50)
   private String nomeAlbum;
 
-  @Column(name = "Resumo_Album")
+  @Column(name = "Resumo_Album", length = 1000)
   @Size(min = 4, max = 1000)
   private String resumoAlbum;
 

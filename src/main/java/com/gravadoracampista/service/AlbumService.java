@@ -113,10 +113,6 @@ public class AlbumService {
       albunsResponse.add(albumResponse);
     }
 
-    if(albunsResponse.isEmpty()){
-      throw new ResourceNotFoundException("Nenhum album encontrada.");
-    }
-
     return albunsResponse;
   }
 
@@ -140,10 +136,6 @@ public List<AlbumResponseFullDto> getAllAlbumCompletos() {
         albumResponse.setIdAlbum(album.getAlbumId());
 
         albunsResponse.add(albumResponse);
-    }
-
-    if (albunsResponse.isEmpty()) {
-        throw new ResourceNotFoundException("Nenhum album encontrado.");
     }
 
     return albunsResponse;

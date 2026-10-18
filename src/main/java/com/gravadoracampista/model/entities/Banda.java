@@ -19,10 +19,10 @@ public class Banda {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long bandaId;
 
-  @Column(name = "Nome_Banda", unique = true)
+  @Column(name = "Nome_Banda")
   private String nomeBanda;
 
-  @Column(name = "Resumo_Banda")
+  @Column(name = "Resumo_Banda", length = 1000)
   private String resumoBanda;
 
   @Column(name = "Media_Banda")

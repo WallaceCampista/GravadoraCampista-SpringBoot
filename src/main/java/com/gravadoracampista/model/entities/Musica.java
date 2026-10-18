@@ -20,7 +20,7 @@ public class Musica {
   @Column(name = "Nome_Musica")
   private String nomeMusica;
 
-  @Column(name = "Resumo_Musica")
+  @Column(name = "Resumo_Musica", length = 1000)
   private String resumoMusica;
 
   @Column(name = "Media_Musica")

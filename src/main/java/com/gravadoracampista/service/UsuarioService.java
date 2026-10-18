@@ -77,7 +77,7 @@ public class UsuarioService {
 
   @Transactional(rollbackFor = Exception.class)
   public UserDetails findUsuarioByidFuncional(String username) {
-    Usuario usuario = usuarioRepository.findByUsername(username)
+    Usuario usuario = usuarioRepository.findByUsernameAndExcluidoFalse(username)
             .orElseThrow(() -> new UsernameNotFoundException("Usuario não encontrado com idFuncional: " + username));
     return usuario;
   }
@@ -95,8 +95,8 @@ public class UsuarioService {
     if(request.getUsername() != null){
       user.setUsername(request.getUsername());
     }
-    if(request.getPassword() != null){
-      user.setPassword(request.getPassword());
+    if(request.getPassword() != null && !request.getPassword().isBlank()){
+      user.setPassword(new BCryptPasswordEncoder().encode(request.getPassword()));
     }
     if (request.getEmail() != null){
       user.setEmail(request.getEmail());
@@ -140,7 +140,6 @@ public class UsuarioService {
     return new UserResponseDto(
             usuario.getUsuarioId(),
             usuario.getUsername(),
-            usuario.getPassword(),
             usuario.getEmail(),
             usuario.getPrimeiroNome(),
             usuario.getSobrenome(),

@@ -105,10 +105,6 @@ public class BandaService {
       bandasResponse.add(bandaResponse);
     }
 
-    if (bandasResponse.isEmpty()) {
-      throw new ResourceNotFoundException("Nenhuma banda encontrada.");
-    }
-
     return bandasResponse;
   }
 
@@ -131,10 +127,6 @@ public List<BandaResponseFullDto> getAllBandaCompleta() {
             .collect(Collectors.toList()));
 
         bandasResponse.add(bandaResponse);
-    }
-
-    if (bandasResponse.isEmpty()) {
-        throw new ResourceNotFoundException("Nenhuma banda encontrada.");
     }
 
     return bandasResponse;

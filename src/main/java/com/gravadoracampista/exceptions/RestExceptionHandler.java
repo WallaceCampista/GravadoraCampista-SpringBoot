@@ -3,21 +3,25 @@ package com.gravadoracampista.exceptions;
 import com.gravadoracampista.service.exceptions.allExceptions.CreateEntitiesException;
 import com.gravadoracampista.service.exceptions.allExceptions.RestErrorMessage;
 import com.gravadoracampista.service.exceptions.userExceptions.PasswordNotMatchException;
+import com.gravadoracampista.service.exceptions.userExceptions.UsernameNotFoundException;
 import com.gravadoracampista.utils.FormatList;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -56,6 +60,31 @@ public class RestExceptionHandler {
             errorDetail = ProblemDetail
                     .forStatusAndDetail(HttpStatusCode.valueOf(401), ex.getMessage());
             errorDetail.setProperty("access_denied_reason", "Usuário não autorizado!");
+            log.error(ex.getMessage(), ex);
+        }
+
+        //TOKEN DE UM USUARIO QUE NAO EXISTE MAIS OU FOI EXCLUIDO
+        if (ex instanceof UsernameNotFoundException) {
+            errorDetail = ProblemDetail
+                    .forStatusAndDetail(HttpStatusCode.valueOf(403), ex.getMessage());
+            errorDetail.setProperty("access_denied_reason", "Usuário não autenticado!");
+        }
+
+        if (ex instanceof HttpMessageNotReadableException || ex instanceof MethodArgumentTypeMismatchException) {
+            errorDetail = ProblemDetail
+                    .forStatusAndDetail(HttpStatus.BAD_REQUEST, "Requisição com dados em formato inválido.");
+        }
+
+        if (ex instanceof DataIntegrityViolationException) {
+            errorDetail = ProblemDetail
+                    .forStatusAndDetail(HttpStatus.CONFLICT, "Não foi possível salvar: registro duplicado ou com dados inválidos.");
+            log.error(ex.getMessage(), ex);
+        }
+
+        //QUALQUER OUTRO ERRO: SEM ISSO A RESPOSTA SAIA COMO 200 COM CORPO VAZIO
+        if (errorDetail == null) {
+            errorDetail = ProblemDetail
+                    .forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
             log.error(ex.getMessage(), ex);
         }
         return errorDetail;

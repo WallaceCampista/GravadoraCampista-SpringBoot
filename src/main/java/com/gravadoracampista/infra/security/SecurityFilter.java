@@ -4,6 +4,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.gravadoracampista.exceptions.UnauthorizedException;
 import com.gravadoracampista.service.UsuarioService;
+import com.gravadoracampista.service.exceptions.userExceptions.UsernameNotFoundException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,8 +39,6 @@ public class SecurityFilter extends OncePerRequestFilter {
 
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-    System.out.println("SecurityFilter Invocado");
-
     var token = this.recoverToken(request);
 
     try {
@@ -73,7 +72,7 @@ public class SecurityFilter extends OncePerRequestFilter {
 
       filterChain.doFilter(request, response);
 
-    } catch (AccessDeniedException | UnauthorizedException ex) {
+    } catch (AccessDeniedException | UnauthorizedException | UsernameNotFoundException ex) {
       handlerExceptionResolver.resolveException(request, response, null, ex);
     }
   }

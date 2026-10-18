@@ -59,8 +59,7 @@ public class MusicaService {
     musicaRepository.save(musica);
 
     // Atualizar a duração total do álbum
-    double duracaoTotal = album.getMusicas().stream().mapToDouble(Musica::getDuracao).sum();
-    album.setDuracaoTotal(duracaoTotal);
+    album.atualizarDuracaoTotal();
     albumRepository.save(album);
 
     return musicaRequest;
@@ -117,10 +116,6 @@ public class MusicaService {
       musicasResponse.add(musicaResponse);
     }
 
-    if(musicasResponse.isEmpty()){
-      throw new ResourceNotFoundException("Nenhuma musica encontrada.");
-    }
-
     return musicasResponse;
   }
 
@@ -141,10 +136,6 @@ public class MusicaService {
       musicaResponse.setAlbumID(musica.getAlbumID());
 
       musicasResponse.add(musicaResponse);
-    }
-
-    if(musicasResponse.isEmpty()){
-      throw new ResourceNotFoundException("Nenhuma musica encontrada.");
     }
 
     return musicasResponse;

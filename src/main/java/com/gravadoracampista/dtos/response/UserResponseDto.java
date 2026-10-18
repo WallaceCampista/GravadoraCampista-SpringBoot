@@ -12,7 +12,6 @@ public class UserResponseDto {
 
   private Long usuarioId;
   private String username;
-  private String password;
   private String email;
   private String nome ;
   private String sobrenome;

@@ -9,7 +9,8 @@ public class ListUserController {
   public static String getRotaUserController() {
     List<String> ADMIN_ROUTES = Arrays.asList(
             "/usuarios/update/",
-            "/usuarios/delete/"
+            "/usuarios/delete/",
+            "/usuarios/all"
     );
     return ADMIN_ROUTES.toString();
   }
