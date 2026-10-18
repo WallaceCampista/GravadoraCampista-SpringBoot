@@ -14,11 +14,13 @@ import com.gravadoracampista.service.AlbumService;
 import com.gravadoracampista.service.AvaliacaoService;
 import com.gravadoracampista.service.BandaService;
 import com.gravadoracampista.service.MusicaService;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
@@ -32,13 +34,16 @@ public class CriaDadosExemplo implements CommandLineRunner {
   private final AlbumService albumService;
   private final MusicaService musicaService;
   private final AvaliacaoService avaliacaoService;
+  private final EntityManager entityManager;
 
   @Value("${api.dados-exemplo}")
   private boolean dadosExemplo;
 
   //SO POPULA UM BANCO NOVO (NENHUMA BANDA, NEM EXCLUIDA), PARA A HOME "TOP 3" NAO ABRIR VAZIA
   //PASSA PELOS SERVICES PARA SEGUIR AS MESMAS REGRAS DO CADASTRO PELA TELA
+  //UMA TRANSACAO SO: SE A API PARAR NO MEIO DA CARGA, NADA FICA GRAVADO PELA METADE
   @Override
+  @Transactional(rollbackFor = Exception.class)
   public void run(String... args) {
     if (!dadosExemplo || bandaRepository.count() > 0) {
       return;
@@ -74,6 +79,7 @@ public class CriaDadosExemplo implements CommandLineRunner {
   }
 
   private Banda banda(String nome, String resumo, double... notas) {
+    novoContexto();
     bandaService.registroDeBanda(new BandaRequestDto(nome, resumo));
     Banda banda = bandaRepository.findByNomeBandaAndExcluidoFalse(nome).orElseThrow();
     for (double nota : notas) {
@@ -83,6 +89,7 @@ public class CriaDadosExemplo implements CommandLineRunner {
   }
 
   private Album album(Banda banda, String nome, String resumo, double... notas) {
+    novoContexto();
     albumService.registroDeAlbum(new AlbumRequestDto(banda.getBandaId(), nome, resumo));
     Album album = albumRepository.findByNomeAlbumAndExcluidoFalse(nome).orElseThrow();
     for (double nota : notas) {
@@ -92,10 +99,18 @@ public class CriaDadosExemplo implements CommandLineRunner {
   }
 
   private void musica(Album album, String nome, String resumo, double duracao, double... notas) {
+    novoContexto();
     musicaService.registroDeMusica(new MusicaRequestDto(album.getAlbumId(), nome, resumo, duracao));
     Musica musica = musicaRepository.findByNomeMusicaAndExcluidoFalse(nome).orElseThrow();
     for (double nota : notas) {
       avaliacaoService.avaliarMusica(musica.getMusicaId(), new AvaliacaoRequestDto(nota));
     }
+  }
+
+  //NUMA TRANSACAO SO, UMA LISTA JA CARREGADA (EX.: MUSICAS DO ALBUM, SOMADAS NA DURACAO TOTAL) NAO VE OS
+  //REGISTROS NOVOS; LIMPAR O CONTEXTO FAZ CADA PASSO LER DO BANCO, COMO NUMA CHAMADA FEITA PELA TELA
+  private void novoContexto() {
+    entityManager.flush();
+    entityManager.clear();
   }
 }
