@@ -10,6 +10,7 @@ import com.gravadoracampista.repository.AlbumRepository;
 import com.gravadoracampista.repository.MusicaRepository;
 import com.gravadoracampista.service.exceptions.allExceptions.CreateEntitiesException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ public class MusicaService {
 
   private final MusicaRepository musicaRepository;
   private final AlbumRepository albumRepository;
+  private final MidiaService midiaService;
 
   @Transactional(rollbackFor = Exception.class)
   public MusicaRequestDto registroDeMusica(MusicaRequestDto musicaRequest) {
@@ -51,7 +53,7 @@ public class MusicaService {
     Musica musica = new Musica();
     musica.setNomeMusica(musicaRequest.getNomeMusica());
     musica.setResumoMusica(musicaRequest.getResumoMusica());
-    musica.setDuracao(musicaRequest.getDuracao());
+    musica.setDuracao(musicaRequest.getDuracao() == null ? 0 : musicaRequest.getDuracao());
     musica.setAlbumID(album);
     musica.setBandaID(album.getBanda());
 
@@ -81,7 +83,10 @@ public class MusicaService {
     Album albumAnterior = musica.getAlbumID();
     musica.setNomeMusica(request.getNomeMusica());
     musica.setResumoMusica(request.getResumoMusica());
-    musica.setDuracao(request.getDuracao());
+    //COM MP3, A DURACAO E A DO ARQUIVO
+    if (musica.getAudioArquivo() == null && request.getDuracao() != null) {
+      musica.setDuracao(request.getDuracao());
+    }
     musica.setAlbumID(album);
     musica.setBandaID(album.getBanda());
     musicaRepository.save(musica);
@@ -112,6 +117,7 @@ public class MusicaService {
       musicaResponse.setNomeMusica(musica.getNomeMusica());
       musicaResponse.setResumoMusica(musica.getResumoMusica());
       musicaResponse.setDuracao(musica.getDuracao());
+      musicaResponse.setAudioArquivo(musica.getAudioArquivo());
 
       musicasResponse.add(musicaResponse);
     }
@@ -132,6 +138,7 @@ public class MusicaService {
       musicaResponse.setResumoMusica(musica.getResumoMusica());
       musicaResponse.setDuracao(musica.getDuracao());
       musicaResponse.setAvaliacaoMedia(musica.getAvaliacaoMedia());
+      musicaResponse.setAudioArquivo(musica.getAudioArquivo());
       musicaResponse.setBandaID(musica.getBandaID());
       musicaResponse.setAlbumID(musica.getAlbumID());
 
@@ -159,5 +166,31 @@ public class MusicaService {
 
     Album album = albumService.getAlbumById(musica.getAlbumID().getAlbumId());
     album.atualizarDuracaoTotal();
+  }
+
+  //A DURACAO DA MUSICA PASSA A SER A DO MP3, E A DO ALBUM E RECALCULADA
+  @Transactional(rollbackFor = Exception.class)
+  public void atualizarAudio(Long id, MultipartFile arquivo) {
+    Musica musica = getMusicaById(id);
+    String audioAntigo = musica.getAudioArquivo();
+    MidiaService.AudioSalvo audio = midiaService.salvarAudio(arquivo);
+    musica.setAudioArquivo(audio.nome());
+    musica.setDuracao(audio.duracao());
+    this.musicaRepository.save(musica);
+
+    Album album = musica.getAlbumID();
+    album.atualizarDuracaoTotal();
+    albumRepository.save(album);
+    midiaService.apagar(audioAntigo);
+  }
+
+  //A DURACAO FICA COMO ESTAVA E VOLTA A SER EDITAVEL
+  @Transactional(rollbackFor = Exception.class)
+  public void removerAudio(Long id) {
+    Musica musica = getMusicaById(id);
+    String audioAntigo = musica.getAudioArquivo();
+    musica.setAudioArquivo(null);
+    this.musicaRepository.save(musica);
+    midiaService.apagar(audioAntigo);
   }
 }

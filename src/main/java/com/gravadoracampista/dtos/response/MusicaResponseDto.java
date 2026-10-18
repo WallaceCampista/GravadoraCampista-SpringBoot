@@ -13,4 +13,5 @@ public class MusicaResponseDto {
   private String nomeMusica;
   private String resumoMusica;
   private double duracao;
+  private String audioArquivo;
 }

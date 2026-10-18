@@ -2,6 +2,7 @@ package com.gravadoracampista.dtos.request;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -23,6 +24,7 @@ public class MusicaRequestDto {
   @Size(max = 1000)
   private String resumoMusica;
 
-  @NotNull(message = "Preenchimento Obrigatório.")
-  private double duracao;
+  //OPCIONAL: QUANDO A MUSICA TEM MP3, A DURACAO E LIDA DO ARQUIVO E ESTE VALOR E IGNORADO
+  @PositiveOrZero(message = "A duração não pode ser negativa.")
+  private Double duracao;
 }

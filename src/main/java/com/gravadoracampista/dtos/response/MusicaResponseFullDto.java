@@ -17,10 +17,11 @@ public class MusicaResponseFullDto {
   private String resumoMusica;
   private double duracao;
   private double avaliacaoMedia;
+  private String audioArquivo;
   private Album albumID;
   private Banda bandaID;
 
   public static MusicaResponseFullDto fromMusica(Musica musica) {
-    return new MusicaResponseFullDto(musica.getMusicaId(), musica.getNomeMusica(), musica.getResumoMusica(), musica.getDuracao(), musica.getAvaliacaoMedia(), musica.getAlbumID(), musica.getBandaID());
+    return new MusicaResponseFullDto(musica.getMusicaId(), musica.getNomeMusica(), musica.getResumoMusica(), musica.getDuracao(), musica.getAvaliacaoMedia(), musica.getAudioArquivo(), musica.getAlbumID(), musica.getBandaID());
   }
 }

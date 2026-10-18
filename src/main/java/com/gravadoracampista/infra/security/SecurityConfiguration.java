@@ -29,7 +29,7 @@ public class SecurityConfiguration {
 
     };
     private static final String[] GET_ROLE_ALLPERMIT = {
-            //IMAGENS ENVIADAS: A TAG <img> NAO ENVIA O TOKEN
+            //IMAGENS E MP3 ENVIADOS: AS TAGS <img> E <audio> NAO ENVIAM O TOKEN
             "/midia/**"
     };
 
@@ -47,11 +47,13 @@ public class SecurityConfiguration {
             "/musica/delete/**",
             "/usuarios/delete/**",
             "/banda/foto/**",
-            "/album/capa/**"
+            "/album/capa/**",
+            "/musica/audio/**"
     };
     private static final String[] POST_ROLE_ADMIN = {
             "/banda/foto/**",
-            "/album/capa/**"
+            "/album/capa/**",
+            "/musica/audio/**"
     };
     private static final String[] GET_ROLE_ADMIN = {
             "/usuarios/all"

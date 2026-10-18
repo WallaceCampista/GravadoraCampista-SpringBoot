@@ -29,6 +29,10 @@ public class Musica {
   @Column(name = "Duracao")
   private double duracao;
 
+  //NOME DO MP3 NA PASTA DE MIDIA (null = SEM AUDIO); COM AUDIO, A DURACAO VEM DO ARQUIVO
+  @Column(name = "Audio_Arquivo")
+  private String audioArquivo;
+
   @Column(name= "excluido")
   @JsonIgnore
   private Boolean excluido = false;

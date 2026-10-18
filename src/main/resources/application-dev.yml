@@ -8,9 +8,9 @@ spring:
 
   servlet:
     multipart:
-      # imagens de banda e de álbum
-      max-file-size: 5MB
-      max-request-size: 6MB
+      # maior arquivo aceito (o MP3); o limite de cada tipo fica em api.midia
+      max-file-size: 20MB
+      max-request-size: 21MB
 
   jpa:
     show-sql: true
@@ -42,9 +42,16 @@ api:
   # popula um banco vazio com bandas, álbuns e músicas de exemplo
   dados-exemplo: ${DADOS_EXEMPLO:true}
 
-  # pasta onde ficam as imagens enviadas (fora do Git; caminho relativo à pasta em que a API roda)
+  # pasta onde ficam as imagens e os MP3 enviados (fora do Git; caminho relativo à pasta em que a API roda)
   midia:
     pasta: ${MIDIA_PASTA:uploads}
+    limite-imagem: 5MB
+    limite-audio: 20MB
+
+logging:
+  level:
+    # a jaudiotagger escreve uma linha para cada MP3 lido
+    org.jaudiotagger: WARN
 
 server:
   error:

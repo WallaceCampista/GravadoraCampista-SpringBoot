@@ -49,7 +49,7 @@ Todos os valores têm um padrão para desenvolvimento local e podem ser trocados
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` / `ADMIN_EMAIL` | `admin` / `Admin@123` / `admin@gravadoracampista.com` | Admin criado na inicialização |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:4200` | Origens do frontend liberadas (separe por vírgula) |
 | `DADOS_EXEMPLO` | `true` | Cria bandas, álbuns e músicas de exemplo quando o banco está vazio |
-| `MIDIA_PASTA` | `uploads` | Pasta das imagens enviadas, relativa à pasta em que a API roda (fica fora do Git) |
+| `MIDIA_PASTA` | `uploads` | Pasta das imagens e dos MP3 enviados, relativa à pasta em que a API roda (fica fora do Git) |
 
 ## Autenticação
 
@@ -93,15 +93,17 @@ Todas as rotas terminam com `/` (sem a barra final a resposta é `404`), exceto 
 | DELETE | `/album/delete/{id}/` | admin | — (apaga também as músicas) |
 | POST | `/album/capa/{id}/` | admin | multipart, campo `arquivo` (imagem) |
 | DELETE | `/album/capa/{id}/` | admin | — (remove a capa) |
-| POST | `/musica/novo-registro/` | logado | `idAlbum`, `nomeMusica`, `resumoMusica`, `duracao` (segundos) |
+| POST | `/musica/novo-registro/` | logado | `idAlbum`, `nomeMusica`, `resumoMusica`, `duracao` (segundos, opcional) |
 | GET | `/musica/listar-musicas-simples/` | logado | — |
 | GET | `/musica/listar-musicas-completas/` | logado | — |
 | GET | `/musica/{nome}/` | logado | — (busca por parte do nome, paginada) |
 | POST | `/musica/avaliar-musica/{id}/` | logado | `nota` (0 a 10); avaliar de novo substitui a nota anterior |
 | GET | `/musica/minha-avaliacao/{id}/` | logado | — (devolve `{"nota": …}` com a nota do usuário logado, ou `null`) |
-| PUT | `/musica/update/{id}/` | admin | `idAlbum`, `nomeMusica`, `resumoMusica`, `duracao` |
+| PUT | `/musica/update/{id}/` | admin | `idAlbum`, `nomeMusica`, `resumoMusica`, `duracao` (opcional; ignorada se a música tem MP3) |
+| POST | `/musica/audio/{id}/` | admin | multipart, campo `arquivo` (MP3) |
+| DELETE | `/musica/audio/{id}/` | admin | — (remove o MP3) |
 | DELETE | `/musica/delete/{id}/` | admin | — |
-| GET | `/midia/{arquivo}` | público | — (imagem enviada) |
+| GET | `/midia/{arquivo}` | público | — (imagem ou MP3 enviado; aceita `Range`) |
 
 As exclusões são lógicas: o registro fica no banco marcado como excluído e some das listagens.
 
@@ -114,6 +116,18 @@ As exclusões são lógicas: o registro fica no banco marcado como excluído e s
 
 ## Imagens
 
-A foto da banda e a capa do álbum são enviadas como formulário multipart, no campo `arquivo`. A API aceita JPG, PNG e WebP de até 5 MB e confere o formato pelo conteúdo do arquivo, não pela extensão. Cada envio grava o arquivo com um nome aleatório na pasta `MIDIA_PASTA` e apaga a imagem anterior.
+A foto da banda e a capa do álbum são enviadas como formulário multipart, no campo `arquivo`. A API aceita JPG, PNG e WebP de até 5 MB (acima disso responde `400` com a mensagem) e confere o formato pelo conteúdo do arquivo, não pela extensão. Cada envio grava o arquivo com um nome aleatório na pasta `MIDIA_PASTA` e apaga a imagem anterior.
 
 As listas trazem o nome do arquivo em `fotoArquivo` (banda) e `capaArquivo` (álbum), ou `null` quando não há imagem. A imagem fica em `GET /midia/{arquivo}`, que é a única rota de leitura sem token, porque a tag `<img>` do navegador não envia o token.
+
+## Áudio
+
+- O MP3 da música é enviado como formulário multipart, no campo `arquivo`, em `POST /musica/audio/{id}/`. A API aceita só MP3, de até 20 MB.
+  - O formato é conferido pelos primeiros bytes (etiqueta ID3 ou quadro MPEG camada III). Depois, a biblioteca `jaudiotagger` lê o arquivo: se ela não consegue, o arquivo é apagado e a resposta é `400`.
+  - Qualquer envio acima de 20 MB responde `413`. Esse é o limite do formulário (`spring.servlet.multipart`); o de cada tipo fica em `api.midia.limite-imagem` e `api.midia.limite-audio`.
+- A duração da música passa a ser a do MP3, arredondada em segundos, e a duração total do álbum é recalculada.
+  - Enquanto a música tem MP3, a `duracao` enviada no cadastro ou na edição é ignorada. Sem MP3 ela é opcional (fica `0`).
+  - Remover o MP3 mantém a última duração, que volta a ser editável.
+- As listas trazem o nome do arquivo em `audioArquivo` (ou `null`), inclusive nas músicas dentro dos álbuns.
+- O MP3 fica em `GET /midia/{arquivo}`, que aceita `Range`: o navegador pede só o pedaço que precisa (resposta `206`), e dá para avançar e voltar na faixa sem baixar tudo.
+- Use só músicas que você pode publicar (por exemplo, de [Pixabay Music](https://pixabay.com/music/) ou [Free Music Archive](https://freemusicarchive.org/) com licença Creative Commons). A rota de mídia é pública, e a pasta `uploads/` nunca vai para o Git.

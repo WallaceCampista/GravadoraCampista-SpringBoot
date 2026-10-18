@@ -16,9 +16,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
@@ -105,6 +107,27 @@ public class MusicaController {
         try {
             musicaService.deleteMusica(id);
             return ResponseEntity.ok().body("Musica excluída com sucesso!");
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    //SO ADMIN (VER SecurityConfiguration). O MP3 VAI NO CAMPO "arquivo" DE UM FORMULARIO MULTIPART
+    @PostMapping(value = "/audio/{id}/", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> enviarAudio(@PathVariable("id") Long id, @RequestParam("arquivo") MultipartFile arquivo) {
+        try {
+            musicaService.atualizarAudio(id, arquivo);
+            return ResponseEntity.ok().body("Áudio da música atualizado com sucesso!");
+        } catch (ResourceNotFoundException | CreateEntitiesException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/audio/{id}/")
+    public ResponseEntity<String> removerAudio(@PathVariable("id") Long id) {
+        try {
+            musicaService.removerAudio(id);
+            return ResponseEntity.ok().body("Áudio da música removido.");
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
