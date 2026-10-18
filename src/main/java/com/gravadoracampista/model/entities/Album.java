@@ -34,6 +34,10 @@ public class Album {
   @Column(name = "Media_Album")
   private double avaliacaoMedia = 0.00;
 
+  //SO O NOME DO ARQUIVO; A IMAGEM FICA NA PASTA DE MIDIA (VER MidiaService)
+  @Column(name = "Capa_Arquivo")
+  private String capaArquivo;
+
   @Column(name= "excluido")
   @JsonIgnore
   private Boolean excluido = false;

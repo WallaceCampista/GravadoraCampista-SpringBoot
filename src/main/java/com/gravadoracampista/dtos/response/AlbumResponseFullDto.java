@@ -19,10 +19,11 @@ public class AlbumResponseFullDto {
   private String resumoAlbum;
   private double duracaoTotal;
   private double avaliacaoMedia;
+  private String capaArquivo;
   private List<Musica> musicas;
   private Banda banda;
 
   public static AlbumResponseFullDto fromAlbum(Album album) {
-    return new AlbumResponseFullDto(album.getAlbumId(), album.getNomeAlbum(), album.getResumoAlbum(), album.getDuracaoTotal(), album.getAvaliacaoMedia(), album.getMusicas(), album.getBanda());
+    return new AlbumResponseFullDto(album.getAlbumId(), album.getNomeAlbum(), album.getResumoAlbum(), album.getDuracaoTotal(), album.getAvaliacaoMedia(), album.getCapaArquivo(), album.getMusicas(), album.getBanda());
   }
 }

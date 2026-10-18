@@ -12,4 +12,5 @@ public class AlbumResponseDto {
   private Long idAlbum;
   private String nomeAlbum;
   private String resumoAlbum;
+  private String capaArquivo;
 }

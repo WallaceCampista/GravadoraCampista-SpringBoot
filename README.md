@@ -49,6 +49,7 @@ Todos os valores têm um padrão para desenvolvimento local e podem ser trocados
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` / `ADMIN_EMAIL` | `admin` / `Admin@123` / `admin@gravadoracampista.com` | Admin criado na inicialização |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:4200` | Origens do frontend liberadas (separe por vírgula) |
 | `DADOS_EXEMPLO` | `true` | Cria bandas, álbuns e músicas de exemplo quando o banco está vazio |
+| `MIDIA_PASTA` | `uploads` | Pasta das imagens enviadas, relativa à pasta em que a API roda (fica fora do Git) |
 
 ## Autenticação
 
@@ -61,7 +62,7 @@ Regras de cadastro de usuário: senha com 8+ caracteres, contendo maiúscula, mi
 
 ## Rotas
 
-Todas as rotas terminam com `/` (sem a barra final a resposta é `404`), exceto `/usuarios/all`.
+Todas as rotas terminam com `/` (sem a barra final a resposta é `404`), exceto `/usuarios/all` e `/midia/{arquivo}`.
 
 | Método | Rota | Acesso | Corpo |
 | --- | --- | --- | --- |
@@ -77,6 +78,8 @@ Todas as rotas terminam com `/` (sem a barra final a resposta é `404`), exceto 
 | POST | `/banda/avaliar-banda/{id}/` | logado | `nota` (0 a 10) |
 | PUT | `/banda/update/{id}/` | admin | `nomeBanda`, `resumoBanda` |
 | DELETE | `/banda/delete/{id}/` | admin | — (apaga também os álbuns e músicas) |
+| POST | `/banda/foto/{id}/` | admin | multipart, campo `arquivo` (imagem) |
+| DELETE | `/banda/foto/{id}/` | admin | — (remove a foto) |
 | POST | `/album/novo-registro/` | logado | `idBanda`, `nomeAlbum`, `resumoAlbum` |
 | GET | `/album/listar-albuns-simples/` | logado | — |
 | GET | `/album/listar-albuns-completos/` | logado | — |
@@ -84,6 +87,8 @@ Todas as rotas terminam com `/` (sem a barra final a resposta é `404`), exceto 
 | POST | `/album/avaliar-album/{id}/` | logado | `nota` (0 a 10) |
 | PUT | `/album/update/{id}/` | admin | `idBanda`, `nomeAlbum`, `resumoAlbum` |
 | DELETE | `/album/delete/{id}/` | admin | — (apaga também as músicas) |
+| POST | `/album/capa/{id}/` | admin | multipart, campo `arquivo` (imagem) |
+| DELETE | `/album/capa/{id}/` | admin | — (remove a capa) |
 | POST | `/musica/novo-registro/` | logado | `idAlbum`, `nomeMusica`, `resumoMusica`, `duracao` (segundos) |
 | GET | `/musica/listar-musicas-simples/` | logado | — |
 | GET | `/musica/listar-musicas-completas/` | logado | — |
@@ -91,5 +96,12 @@ Todas as rotas terminam com `/` (sem a barra final a resposta é `404`), exceto 
 | POST | `/musica/avaliar-musica/{id}/` | logado | `nota` (0 a 10) |
 | PUT | `/musica/update/{id}/` | admin | `idAlbum`, `nomeMusica`, `resumoMusica`, `duracao` |
 | DELETE | `/musica/delete/{id}/` | admin | — |
+| GET | `/midia/{arquivo}` | público | — (imagem enviada) |
 
 As exclusões são lógicas: o registro fica no banco marcado como excluído e some das listagens.
+
+## Imagens
+
+A foto da banda e a capa do álbum são enviadas como formulário multipart, no campo `arquivo`. A API aceita JPG, PNG e WebP de até 5 MB e confere o formato pelo conteúdo do arquivo, não pela extensão. Cada envio grava o arquivo com um nome aleatório na pasta `MIDIA_PASTA` e apaga a imagem anterior.
+
+As listas trazem o nome do arquivo em `fotoArquivo` (banda) e `capaArquivo` (álbum), ou `null` quando não há imagem. A imagem fica em `GET /midia/{arquivo}`, que é a única rota de leitura sem token, porque a tag `<img>` do navegador não envia o token.

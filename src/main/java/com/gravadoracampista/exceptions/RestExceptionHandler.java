@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -22,6 +23,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
+import org.springframework.util.unit.DataSize;
 
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +35,9 @@ import java.util.Map;
 @RestControllerAdvice
 @Slf4j
 public class RestExceptionHandler {
+
+    @Value("${spring.servlet.multipart.max-file-size}")
+    private DataSize limiteArquivo;
 
     @ExceptionHandler(RuntimeException.class)
     public ProblemDetail handleSecurityException(RuntimeException ex) {
@@ -79,6 +86,15 @@ public class RestExceptionHandler {
             errorDetail = ProblemDetail
                     .forStatusAndDetail(HttpStatus.CONFLICT, "Não foi possível salvar: registro duplicado ou com dados inválidos.");
             log.error(ex.getMessage(), ex);
+        }
+
+        //ENVIO DE ARQUIVO: ACIMA DO LIMITE, OU REQUISICAO SEM UM FORMULARIO MULTIPART VALIDO
+        if (ex instanceof MaxUploadSizeExceededException) {
+            errorDetail = ProblemDetail
+                    .forStatusAndDetail(HttpStatus.PAYLOAD_TOO_LARGE, "O arquivo passa do limite de " + limiteArquivo.toMegabytes() + " MB.");
+        } else if (ex instanceof MultipartException) {
+            errorDetail = ProblemDetail
+                    .forStatusAndDetail(HttpStatus.BAD_REQUEST, "Envie o arquivo no campo \"arquivo\" de um formulário multipart.");
         }
 
         //QUALQUER OUTRO ERRO: SEM ISSO A RESPOSTA SAIA COMO 200 COM CORPO VAZIO

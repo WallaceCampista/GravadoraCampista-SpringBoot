@@ -101,6 +101,12 @@ public class SecurityFilter extends OncePerRequestFilter {
     if(rota .contains( "/usuarios/delete/")){
       rota = rota.split("/delete/")[0] + "/delete/";
     }
+    if(rota .contains( "/banda/foto/")){
+      rota = rota.split("/foto/")[0] + "/foto/";
+    }
+    if(rota .contains( "/album/capa/")){
+      rota = rota.split("/capa/")[0] + "/capa/";
+    }
     return rota;
   }
 

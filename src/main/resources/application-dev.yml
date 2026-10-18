@@ -6,6 +6,12 @@ spring:
     password: ${DB_PASSWORD:Senha123.}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  servlet:
+    multipart:
+      # imagens de banda e de álbum
+      max-file-size: 5MB
+      max-request-size: 6MB
+
   jpa:
     show-sql: true
     hibernate:
@@ -36,6 +42,13 @@ api:
   # popula um banco vazio com bandas, álbuns e músicas de exemplo
   dados-exemplo: ${DADOS_EXEMPLO:true}
 
+  # pasta onde ficam as imagens enviadas (fora do Git; caminho relativo à pasta em que a API roda)
+  midia:
+    pasta: ${MIDIA_PASTA:uploads}
+
 server:
   error:
     include-exception: true
+  tomcat:
+    # sem isso, um envio acima do limite derruba a conexão em vez de responder 413 com a mensagem
+    max-swallow-size: 100MB

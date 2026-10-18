@@ -14,8 +14,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
@@ -92,6 +94,27 @@ public class AlbumController {
         try {
             albumService.deleteAlbum(id);
             return ResponseEntity.ok().body("Album excluída com sucesso!");
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    //SO ADMIN (VER ListAlbumController). A IMAGEM VAI NO CAMPO "arquivo" DE UM FORMULARIO MULTIPART
+    @PostMapping(value = "/capa/{id}/", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> enviarCapa(@PathVariable("id") Long id, @RequestParam("arquivo") MultipartFile arquivo) {
+        try {
+            albumService.atualizarCapa(id, arquivo);
+            return ResponseEntity.ok().body("Capa do álbum atualizada com sucesso!");
+        } catch (ResourceNotFoundException | CreateEntitiesException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/capa/{id}/")
+    public ResponseEntity<String> removerCapa(@PathVariable("id") Long id) {
+        try {
+            albumService.removerCapa(id);
+            return ResponseEntity.ok().body("Capa do álbum removida.");
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }

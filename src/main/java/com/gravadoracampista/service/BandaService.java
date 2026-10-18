@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 public class BandaService {
 
   private final BandaRepository bandaRepository;
+  private final MidiaService midiaService;
 
   @Transactional(rollbackFor = Exception.class)
   public BandaRequestDto registroDeBanda(BandaRequestDto bandaRequest) {
@@ -102,6 +104,7 @@ public class BandaService {
       bandaResponse.setIdBanda(banda.getBandaId());
       bandaResponse.setNomeBanda(banda.getNomeBanda());
       bandaResponse.setResumoBanda(banda.getResumoBanda());
+      bandaResponse.setFotoArquivo(banda.getFotoArquivo());
       bandasResponse.add(bandaResponse);
     }
 
@@ -156,5 +159,24 @@ public List<BandaResponseFullDto> getAllBandaCompleta() {
     });
 
     this.bandaRepository.save(banda);
+  }
+
+  //GRAVA A FOTO NOVA E SO DEPOIS APAGA A ANTIGA: SE O ENVIO FALHAR, A BANDA CONTINUA COM A FOTO QUE TINHA
+  @Transactional(rollbackFor = Exception.class)
+  public void atualizarFoto(Long id, MultipartFile arquivo) {
+    Banda banda = getBandaById(id);
+    String fotoAntiga = banda.getFotoArquivo();
+    banda.setFotoArquivo(midiaService.salvarImagem(arquivo));
+    this.bandaRepository.save(banda);
+    midiaService.apagar(fotoAntiga);
+  }
+
+  @Transactional(rollbackFor = Exception.class)
+  public void removerFoto(Long id) {
+    Banda banda = getBandaById(id);
+    String fotoAntiga = banda.getFotoArquivo();
+    banda.setFotoArquivo(null);
+    this.bandaRepository.save(banda);
+    midiaService.apagar(fotoAntiga);
   }
 }

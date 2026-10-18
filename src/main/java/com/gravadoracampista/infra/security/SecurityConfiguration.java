@@ -1,5 +1,6 @@
 package com.gravadoracampista.infra.security;
 
+import jakarta.servlet.DispatcherType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -27,7 +28,8 @@ public class SecurityConfiguration {
 
     };
     private static final String[] GET_ROLE_ALLPERMIT = {
-
+            //IMAGENS ENVIADAS: A TAG <img> NAO ENVIA O TOKEN
+            "/midia/**"
     };
 
     @Autowired
@@ -47,6 +49,8 @@ public class SecurityConfiguration {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
+                        //A RESPOSTA DE ERRO (404, 400...) PASSA DE NOVO PELA SEGURANCA; SEM ISSO TODO ERRO VIRAVA 403
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/usuarios/**").permitAll()
                         .requestMatchers(HttpMethod.POST, POST_ROLE_ALLPERMIT).permitAll()
                         .requestMatchers(HttpMethod.GET, GET_ROLE_ALLPERMIT).permitAll()

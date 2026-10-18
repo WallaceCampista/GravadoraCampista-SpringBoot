@@ -9,7 +9,8 @@ public class ListBandaController {
   public static String getRotaBandaController() {
     List<String> ADMIN_ROUTES = Arrays.asList(
             "/banda/update/",
-            "/banda/delete/"
+            "/banda/delete/",
+            "/banda/foto/"
     );
     return ADMIN_ROUTES.toString();
   }

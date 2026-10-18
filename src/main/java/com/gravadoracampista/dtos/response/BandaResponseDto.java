@@ -12,4 +12,5 @@ public class BandaResponseDto {
   private Long idBanda;
   private String nomeBanda;
   private String resumoBanda;
+  private String fotoArquivo;
 }

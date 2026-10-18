@@ -17,9 +17,10 @@ public class BandaResponseFullDto {
   private String nomeBanda;
   private String resumoBanda;
   private double avaliacaoMedia;
+  private String fotoArquivo;
   private List<Album> albuns;
 
   public static BandaResponseFullDto fromBanda(Banda banda) {
-    return new BandaResponseFullDto(banda.getBandaId(), banda.getNomeBanda(), banda.getResumoBanda(), banda.getAvaliacaoMedia(), banda.getAlbuns());
+    return new BandaResponseFullDto(banda.getBandaId(), banda.getNomeBanda(), banda.getResumoBanda(), banda.getAvaliacaoMedia(), banda.getFotoArquivo(), banda.getAlbuns());
   }
 }

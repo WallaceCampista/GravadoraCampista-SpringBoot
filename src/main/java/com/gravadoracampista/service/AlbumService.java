@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +26,7 @@ public class AlbumService {
 
   private final BandaService bandaService;
   private final AlbumRepository albumRepository;
+  private final MidiaService midiaService;
 
   @Transactional(rollbackFor = Exception.class)
   public AlbumRequestDto registroDeAlbum(AlbumRequestDto albumRequest) {
@@ -109,6 +111,7 @@ public class AlbumService {
       albumResponse.setIdAlbum(album.getAlbumId());
       albumResponse.setNomeAlbum(album.getNomeAlbum());
       albumResponse.setResumoAlbum(album.getResumoAlbum());
+      albumResponse.setCapaArquivo(album.getCapaArquivo());
 
       albunsResponse.add(albumResponse);
     }
@@ -160,5 +163,24 @@ public List<AlbumResponseFullDto> getAllAlbumCompletos() {
     album.getMusicas().forEach(musica -> musica.setExcluido(true));
 
     this.albumRepository.save(album);
+  }
+
+  //GRAVA A CAPA NOVA E SO DEPOIS APAGA A ANTIGA: SE O ENVIO FALHAR, O ALBUM CONTINUA COM A CAPA QUE TINHA
+  @Transactional(rollbackFor = Exception.class)
+  public void atualizarCapa(Long id, MultipartFile arquivo) {
+    Album album = getAlbumById(id);
+    String capaAntiga = album.getCapaArquivo();
+    album.setCapaArquivo(midiaService.salvarImagem(arquivo));
+    this.albumRepository.save(album);
+    midiaService.apagar(capaAntiga);
+  }
+
+  @Transactional(rollbackFor = Exception.class)
+  public void removerCapa(Long id) {
+    Album album = getAlbumById(id);
+    String capaAntiga = album.getCapaArquivo();
+    album.setCapaArquivo(null);
+    this.albumRepository.save(album);
+    midiaService.apagar(capaAntiga);
   }
 }

@@ -9,7 +9,8 @@ public class ListAlbumController {
   public static String getRotaAlbumController() {
     List<String> ADMIN_ROUTES = Arrays.asList(
             "/album/update/",
-            "/album/delete/"
+            "/album/delete/",
+            "/album/capa/"
     );
     return ADMIN_ROUTES.toString();
   }
