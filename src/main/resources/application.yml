@@ -1,0 +1,10 @@
+spring:
+  profiles:
+    active: "dev"
+  main:
+    allow-circular-references: true
+
+logging:
+  level:
+    org.springframework.security: INFO
+    com.gravadoracampista.exceptions.RestExceptionHandler: OFF
