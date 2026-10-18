@@ -4,16 +4,20 @@ import com.gravadoracampista.dtos.request.AlbumRequestDto;
 import com.gravadoracampista.dtos.request.AvaliacaoRequestDto;
 import com.gravadoracampista.dtos.request.BandaRequestDto;
 import com.gravadoracampista.dtos.request.MusicaRequestDto;
+import com.gravadoracampista.dtos.request.RegisterRequestDto;
 import com.gravadoracampista.model.entities.Album;
 import com.gravadoracampista.model.entities.Banda;
 import com.gravadoracampista.model.entities.Musica;
+import com.gravadoracampista.model.entities.Usuario;
 import com.gravadoracampista.repository.AlbumRepository;
 import com.gravadoracampista.repository.BandaRepository;
 import com.gravadoracampista.repository.MusicaRepository;
+import com.gravadoracampista.repository.UsuarioRepository;
 import com.gravadoracampista.service.AlbumService;
 import com.gravadoracampista.service.AvaliacaoService;
 import com.gravadoracampista.service.BandaService;
 import com.gravadoracampista.service.MusicaService;
+import com.gravadoracampista.service.UsuarioService;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +25,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Slf4j
 @Component
@@ -30,14 +36,19 @@ public class CriaDadosExemplo implements CommandLineRunner {
   private final BandaRepository bandaRepository;
   private final AlbumRepository albumRepository;
   private final MusicaRepository musicaRepository;
+  private final UsuarioRepository usuarioRepository;
   private final BandaService bandaService;
   private final AlbumService albumService;
   private final MusicaService musicaService;
   private final AvaliacaoService avaliacaoService;
+  private final UsuarioService usuarioService;
   private final EntityManager entityManager;
 
   @Value("${api.dados-exemplo}")
   private boolean dadosExemplo;
+
+  //CADA USUARIO DA UMA NOTA SO POR ITEM, ENTAO A N-ESIMA NOTA DE EXEMPLO E DO N-ESIMO OUVINTE
+  private List<Usuario> ouvintes;
 
   //SO POPULA UM BANCO NOVO (NENHUMA BANDA, NEM EXCLUIDA), PARA A HOME "TOP 3" NAO ABRIR VAZIA
   //PASSA PELOS SERVICES PARA SEGUIR AS MESMAS REGRAS DO CADASTRO PELA TELA
@@ -48,6 +59,11 @@ public class CriaDadosExemplo implements CommandLineRunner {
     if (!dadosExemplo || bandaRepository.count() > 0) {
       return;
     }
+
+    ouvintes = List.of(
+            ouvinte("ana.lima", "Ana", "Lima"),
+            ouvinte("bruno.costa", "Bruno", "Costa"),
+            ouvinte("carla.souza", "Carla", "Souza"));
 
     Banda mareAlta = banda("Maré Alta", "Rock alternativo nascido às margens do Paraíba do Sul.", 9, 8, 10);
     Album planicie = album(mareAlta, "Planície", "Disco de estreia, gravado ao vivo em estúdio.", 9, 8);
@@ -75,15 +91,24 @@ public class CriaDadosExemplo implements CommandLineRunner {
     musica(tresAcordes, "Sinal Fechado", "A mais curta do EP.", 118, 5);
     musica(tresAcordes, "Hora Extra", "Faixa escondida no fim do EP.", 141, 7);
 
-    log.info("Banco vazio: criados dados de exemplo ({} bandas). Desligue com DADOS_EXEMPLO=false.", bandaRepository.count());
+    log.info("Banco vazio: criados dados de exemplo ({} bandas, avaliadas pelos ouvintes {}). Desligue com DADOS_EXEMPLO=false.",
+            bandaRepository.count(), ouvintes.stream().map(Usuario::getUsername).toList());
+  }
+
+  //USUARIO COMUM QUE ASSINA AS NOTAS DE EXEMPLO; TODOS ENTRAM COM A SENHA "Ouvinte@123"
+  private Usuario ouvinte(String username, String nome, String sobrenome) {
+    return usuarioRepository.findByUsernameAndExcluidoFalse(username).orElseGet(() -> {
+      usuarioService.registerOfUser(new RegisterRequestDto(username, "Ouvinte@123", username + "@ouvintes.com", nome, sobrenome));
+      return usuarioRepository.findByUsernameAndExcluidoFalse(username).orElseThrow();
+    });
   }
 
   private Banda banda(String nome, String resumo, double... notas) {
     novoContexto();
     bandaService.registroDeBanda(new BandaRequestDto(nome, resumo));
     Banda banda = bandaRepository.findByNomeBandaAndExcluidoFalse(nome).orElseThrow();
-    for (double nota : notas) {
-      avaliacaoService.avaliarBanda(banda.getBandaId(), new AvaliacaoRequestDto(nota));
+    for (int i = 0; i < notas.length; i++) {
+      avaliacaoService.avaliarBanda(banda.getBandaId(), new AvaliacaoRequestDto(notas[i]), ouvintes.get(i));
     }
     return banda;
   }
@@ -91,9 +116,9 @@ public class CriaDadosExemplo implements CommandLineRunner {
   private Album album(Banda banda, String nome, String resumo, double... notas) {
     novoContexto();
     albumService.registroDeAlbum(new AlbumRequestDto(banda.getBandaId(), nome, resumo));
-    Album album = albumRepository.findByNomeAlbumAndExcluidoFalse(nome).orElseThrow();
-    for (double nota : notas) {
-      avaliacaoService.avaliarAlbum(album.getAlbumId(), new AvaliacaoRequestDto(nota));
+    Album album = albumRepository.findByNomeAlbumAndBandaAndExcluidoFalse(nome, banda).orElseThrow();
+    for (int i = 0; i < notas.length; i++) {
+      avaliacaoService.avaliarAlbum(album.getAlbumId(), new AvaliacaoRequestDto(notas[i]), ouvintes.get(i));
     }
     return album;
   }
@@ -101,9 +126,9 @@ public class CriaDadosExemplo implements CommandLineRunner {
   private void musica(Album album, String nome, String resumo, double duracao, double... notas) {
     novoContexto();
     musicaService.registroDeMusica(new MusicaRequestDto(album.getAlbumId(), nome, resumo, duracao));
-    Musica musica = musicaRepository.findByNomeMusicaAndExcluidoFalse(nome).orElseThrow();
-    for (double nota : notas) {
-      avaliacaoService.avaliarMusica(musica.getMusicaId(), new AvaliacaoRequestDto(nota));
+    Musica musica = musicaRepository.findByNomeMusicaAndAlbumIDAndExcluidoFalse(nome, album).orElseThrow();
+    for (int i = 0; i < notas.length; i++) {
+      avaliacaoService.avaliarMusica(musica.getMusicaId(), new AvaliacaoRequestDto(notas[i]), ouvintes.get(i));
     }
   }
 

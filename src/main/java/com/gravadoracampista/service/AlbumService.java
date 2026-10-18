@@ -37,9 +37,9 @@ public class AlbumService {
     List<String> errorMessages = new ArrayList<>();
 
     //VALIDACOES DE REGRAS DE NEGOCIO
-    Optional<Album> existingAlbum= this.albumRepository.findByNomeAlbumAndExcluidoFalse(albumRequest.getNomeAlbum());
+    Optional<Album> existingAlbum= this.albumRepository.findByNomeAlbumAndBandaAndExcluidoFalse(albumRequest.getNomeAlbum(), banda);
     if (existingAlbum.isPresent()) {
-      errorMessages.add("Esse album já existe na gravadora.");
+      errorMessages.add("Essa banda já tem um álbum com esse nome.");
     }
 
     //VERIFICANDO SE A LISTA DE ERRO ESTA VAZIA. CASO CONTRARIO, RETORNA UMA EXCEÇÃO
@@ -69,9 +69,9 @@ public class AlbumService {
     List<String> errorMessages = new ArrayList<>();
 
     //VALIDACOES DE REGRAS DE NEGOCIO
-    Optional<Album> existingAlbum = this.albumRepository.findByNomeAlbumAndExcluidoFalse(request.getNomeAlbum());
+    Optional<Album> existingAlbum = this.albumRepository.findByNomeAlbumAndBandaAndExcluidoFalse(request.getNomeAlbum(), banda);
     if (existingAlbum.isPresent() && !existingAlbum.get().getAlbumId().equals(album.getAlbumId())) {
-      errorMessages.add("Esse album já existe na gravadora.");
+      errorMessages.add("Essa banda já tem um álbum com esse nome.");
     }
 
     //VERIFICANDO SE A LISTA DE ERRO ESTA VAZIA. CASO CONTRARIO, RETORNA UMA EXCEÇÃO

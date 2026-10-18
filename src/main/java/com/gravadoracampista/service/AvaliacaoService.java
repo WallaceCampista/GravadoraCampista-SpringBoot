@@ -7,6 +7,7 @@ import com.gravadoracampista.model.entities.Avaliacao.Avaliacao_Banda_Table;
 import com.gravadoracampista.model.entities.Avaliacao.Avaliacao_Musica_Table;
 import com.gravadoracampista.model.entities.Banda;
 import com.gravadoracampista.model.entities.Musica;
+import com.gravadoracampista.model.entities.Usuario;
 import com.gravadoracampista.repository.*;
 import com.gravadoracampista.service.exceptions.allExceptions.CreateEntitiesException;
 import lombok.RequiredArgsConstructor;
@@ -31,13 +32,16 @@ public class AvaliacaoService {
   private final AvaliacaoMusicaRepository avaliacaoMusicaRepository;
 
 
+  //UMA NOTA POR USUARIO: AVALIAR DE NOVO SUBSTITUI A NOTA ANTERIOR DESSE USUARIO
   @Transactional(rollbackFor = Exception.class)
-  public double avaliarBanda(Long id, AvaliacaoRequestDto request) {
+  public double avaliarBanda(Long id, AvaliacaoRequestDto request, Usuario usuario) {
     try {
       Banda banda = bandaService.getBandaById(id);
 
-      Avaliacao_Banda_Table avaliacao = new Avaliacao_Banda_Table();
+      Avaliacao_Banda_Table avaliacao = avaliacaoBandaRepository.findByBandaIDAndUsuario(banda, usuario)
+              .orElseGet(Avaliacao_Banda_Table::new);
       avaliacao.setBandaID(banda);
+      avaliacao.setUsuario(usuario);
       if(request.getNota() > 10 || request.getNota() < 0){
         throw new CreateEntitiesException(List.of("Nota inválida"));
       }
@@ -57,12 +61,14 @@ public class AvaliacaoService {
   }
 
   @Transactional(rollbackFor = Exception.class)
-  public double avaliarAlbum(Long id, AvaliacaoRequestDto request) {
+  public double avaliarAlbum(Long id, AvaliacaoRequestDto request, Usuario usuario) {
     try {
       Album album = albumService.getAlbumById(id);
 
-      Avaliacao_Album_Table avaliacao = new Avaliacao_Album_Table();
+      Avaliacao_Album_Table avaliacao = avaliacaoAlbumRepository.findByAlbumIDAndUsuario(album, usuario)
+              .orElseGet(Avaliacao_Album_Table::new);
       avaliacao.setAlbumID(album);
+      avaliacao.setUsuario(usuario);
       if(request.getNota() > 10 || request.getNota() < 0){
         throw new CreateEntitiesException(List.of("Nota inválida"));
       }
@@ -82,12 +88,14 @@ public class AvaliacaoService {
   }
 
   @Transactional(rollbackFor = Exception.class)
-  public double avaliarMusica(Long id, AvaliacaoRequestDto request) {
+  public double avaliarMusica(Long id, AvaliacaoRequestDto request, Usuario usuario) {
     try {
       Musica musica = musicaService.getMusicaById(id);
 
-      Avaliacao_Musica_Table avaliacao = new Avaliacao_Musica_Table();
+      Avaliacao_Musica_Table avaliacao = avaliacaoMusicaRepository.findByMusicaIDAndUsuario(musica, usuario)
+              .orElseGet(Avaliacao_Musica_Table::new);
       avaliacao.setMusicaID(musica);
+      avaliacao.setUsuario(usuario);
       if(request.getNota() > 10 || request.getNota() < 0){
         throw new CreateEntitiesException(List.of("Nota inválida"));
       }
@@ -104,5 +112,24 @@ public class AvaliacaoService {
     } catch (Exception e) {
       throw new CreateEntitiesException(List.of("Não foi possível criar a avaliação da musica", e.getMessage()));
     }
+  }
+
+  //NOTA QUE O USUARIO JA DEU (OU null SE AINDA NAO AVALIOU), PARA A TELA MOSTRAR "SUA NOTA"
+  @Transactional(rollbackFor = Exception.class)
+  public Double minhaNotaBanda(Long id, Usuario usuario) {
+    Banda banda = bandaService.getBandaById(id);
+    return avaliacaoBandaRepository.findByBandaIDAndUsuario(banda, usuario).map(Avaliacao_Banda_Table::getNota).orElse(null);
+  }
+
+  @Transactional(rollbackFor = Exception.class)
+  public Double minhaNotaAlbum(Long id, Usuario usuario) {
+    Album album = albumService.getAlbumById(id);
+    return avaliacaoAlbumRepository.findByAlbumIDAndUsuario(album, usuario).map(Avaliacao_Album_Table::getNota).orElse(null);
+  }
+
+  @Transactional(rollbackFor = Exception.class)
+  public Double minhaNotaMusica(Long id, Usuario usuario) {
+    Musica musica = musicaService.getMusicaById(id);
+    return avaliacaoMusicaRepository.findByMusicaIDAndUsuario(musica, usuario).map(Avaliacao_Musica_Table::getNota).orElse(null);
   }
 }

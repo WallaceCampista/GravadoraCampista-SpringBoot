@@ -29,7 +29,7 @@ API em Java Spring Boot que simula uma gravadora de música: cadastro de bandas,
    A API sobe em `http://localhost:8080` e as tabelas são criadas automaticamente.
 3. Entre com o admin padrão: usuário `admin`, senha `Admin@123`. Ele é criado na inicialização sempre que não existe nenhum admin.
 
-Com o banco vazio (nenhuma banda cadastrada, nem excluída), a API também cria dados de exemplo: 4 bandas fictícias, com álbuns, músicas e avaliações, para a home "TOP 3" já abrir preenchida. Para começar com o banco vazio, suba com `DADOS_EXEMPLO=false`. A carga é gravada numa transação só: se a API for parada no meio dela, nada fica gravado e a carga roda de novo na próxima subida.
+Com o banco vazio (nenhuma banda cadastrada, nem excluída), a API também cria dados de exemplo: 4 bandas fictícias, com álbuns, músicas e avaliações, para a home "TOP 3" já abrir preenchida. As notas de exemplo são de 3 usuários comuns, os ouvintes `ana.lima`, `bruno.costa` e `carla.souza`, todos com a senha `Ouvinte@123`; dá para entrar com eles e ver a própria nota no popup de avaliar. Para começar com o banco vazio, suba com `DADOS_EXEMPLO=false`. A carga é gravada numa transação só: se a API for parada no meio dela, nada fica gravado e a carga roda de novo na próxima subida.
 
 Para voltar o banco ao estado inicial (só o admin e os dados de exemplo), recrie o banco e suba a API de novo:
 
@@ -58,6 +58,8 @@ Todos os valores têm um padrão para desenvolvimento local e podem ser trocados
 
 Sem token, ou com token inválido, a resposta é `403`. Rotas de admin chamadas por usuário comum respondem `401`.
 
+As rotas de admin ficam listadas, por método, no `SecurityConfiguration`, e quem confere é o próprio Spring Security. O perfil de admin é lido do banco a cada chamada, não do token: promover ou rebaixar um usuário vale na hora, sem precisar entrar de novo.
+
 Regras de cadastro de usuário: senha com 8+ caracteres, contendo maiúscula, minúscula, número e um destes símbolos: `@ # $ % ^ & + = .`. O e-mail precisa terminar em `com`.
 
 ## Rotas
@@ -75,7 +77,8 @@ Todas as rotas terminam com `/` (sem a barra final a resposta é `404`), exceto 
 | GET | `/banda/listar-bandas-simples/` | logado | — |
 | GET | `/banda/listar-bandas-completos/` | logado | — |
 | GET | `/banda/{nome}/` | logado | — (busca por parte do nome, paginada) |
-| POST | `/banda/avaliar-banda/{id}/` | logado | `nota` (0 a 10) |
+| POST | `/banda/avaliar-banda/{id}/` | logado | `nota` (0 a 10); avaliar de novo substitui a nota anterior |
+| GET | `/banda/minha-avaliacao/{id}/` | logado | — (devolve `{"nota": …}` com a nota do usuário logado, ou `null`) |
 | PUT | `/banda/update/{id}/` | admin | `nomeBanda`, `resumoBanda` |
 | DELETE | `/banda/delete/{id}/` | admin | — (apaga também os álbuns e músicas) |
 | POST | `/banda/foto/{id}/` | admin | multipart, campo `arquivo` (imagem) |
@@ -84,7 +87,8 @@ Todas as rotas terminam com `/` (sem a barra final a resposta é `404`), exceto 
 | GET | `/album/listar-albuns-simples/` | logado | — |
 | GET | `/album/listar-albuns-completos/` | logado | — |
 | GET | `/album/{nome}/` | logado | — (busca por parte do nome, paginada) |
-| POST | `/album/avaliar-album/{id}/` | logado | `nota` (0 a 10) |
+| POST | `/album/avaliar-album/{id}/` | logado | `nota` (0 a 10); avaliar de novo substitui a nota anterior |
+| GET | `/album/minha-avaliacao/{id}/` | logado | — (devolve `{"nota": …}` com a nota do usuário logado, ou `null`) |
 | PUT | `/album/update/{id}/` | admin | `idBanda`, `nomeAlbum`, `resumoAlbum` |
 | DELETE | `/album/delete/{id}/` | admin | — (apaga também as músicas) |
 | POST | `/album/capa/{id}/` | admin | multipart, campo `arquivo` (imagem) |
@@ -93,12 +97,20 @@ Todas as rotas terminam com `/` (sem a barra final a resposta é `404`), exceto 
 | GET | `/musica/listar-musicas-simples/` | logado | — |
 | GET | `/musica/listar-musicas-completas/` | logado | — |
 | GET | `/musica/{nome}/` | logado | — (busca por parte do nome, paginada) |
-| POST | `/musica/avaliar-musica/{id}/` | logado | `nota` (0 a 10) |
+| POST | `/musica/avaliar-musica/{id}/` | logado | `nota` (0 a 10); avaliar de novo substitui a nota anterior |
+| GET | `/musica/minha-avaliacao/{id}/` | logado | — (devolve `{"nota": …}` com a nota do usuário logado, ou `null`) |
 | PUT | `/musica/update/{id}/` | admin | `idAlbum`, `nomeMusica`, `resumoMusica`, `duracao` |
 | DELETE | `/musica/delete/{id}/` | admin | — |
 | GET | `/midia/{arquivo}` | público | — (imagem enviada) |
 
 As exclusões são lógicas: o registro fica no banco marcado como excluído e some das listagens.
+
+## Regras de avaliação e de nomes
+
+- Cada usuário tem uma nota por banda, álbum ou música. Avaliar de novo substitui a nota anterior, e a média é recalculada.
+- Avaliações feitas antes dessa regra não têm usuário. Elas continuam contando na média, mas ninguém consegue trocá-las.
+- O nome da banda é único na gravadora. O nome do álbum só precisa ser único dentro da banda, e o da música dentro do álbum: duas bandas podem ter uma faixa "Intro".
+- A comparação de nomes segue o banco (MySQL): maiúsculas e acentos não contam, então "Planície" e "planicie" são o mesmo nome.
 
 ## Imagens
 

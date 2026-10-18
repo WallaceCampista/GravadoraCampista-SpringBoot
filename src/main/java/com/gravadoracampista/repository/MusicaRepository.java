@@ -1,5 +1,6 @@
 package com.gravadoracampista.repository;
 
+import com.gravadoracampista.model.entities.Album;
 import com.gravadoracampista.model.entities.Musica;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,7 +13,8 @@ import java.util.Optional;
 @Repository
 public interface MusicaRepository extends JpaRepository<Musica, Long> {
 
-  Optional<Musica> findByNomeMusicaAndExcluidoFalse(String nomeMusica);
+  //O NOME DA MUSICA SO PRECISA SER UNICO DENTRO DO ALBUM (DUAS BANDAS PODEM TER UMA "Intro")
+  Optional<Musica> findByNomeMusicaAndAlbumIDAndExcluidoFalse(String nomeMusica, Album album);
   List<Musica> findByExcluidoFalse();
   Page<Musica> findByNomeMusicaContainingAndExcluidoFalse(String nome, Pageable pageable);
 }

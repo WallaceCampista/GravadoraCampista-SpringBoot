@@ -4,7 +4,9 @@ import com.gravadoracampista.dtos.request.AlbumRequestDto;
 import com.gravadoracampista.dtos.request.AvaliacaoRequestDto;
 import com.gravadoracampista.dtos.response.AlbumResponseDto;
 import com.gravadoracampista.dtos.response.AlbumResponseFullDto;
+import com.gravadoracampista.dtos.response.MinhaAvaliacaoResponseDto;
 import com.gravadoracampista.exceptions.ResourceNotFoundException;
+import com.gravadoracampista.model.entities.Usuario;
 import com.gravadoracampista.service.AlbumService;
 import com.gravadoracampista.service.AvaliacaoService;
 import com.gravadoracampista.service.exceptions.allExceptions.CreateEntitiesException;
@@ -16,6 +18,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -54,11 +57,21 @@ public class AlbumController {
     }
 
     @PostMapping("/avaliar-album/{id}/")
-    public ResponseEntity<String> avaliarAlbum(@PathVariable("id") Long id, @Valid @RequestBody AvaliacaoRequestDto request) {
+    public ResponseEntity<String> avaliarAlbum(@PathVariable("id") Long id, @Valid @RequestBody AvaliacaoRequestDto request, @AuthenticationPrincipal Usuario usuario) {
         try {
-            double result = this.avaliacaoService.avaliarAlbum(id, request);
+            double result = this.avaliacaoService.avaliarAlbum(id, request, usuario);
             return ResponseEntity.ok("Nova média para album: " +result);
         } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    //NOTA QUE O USUARIO LOGADO JA DEU (OU null), PARA O POPUP DE AVALIAR MOSTRAR "SUA NOTA"
+    @GetMapping("/minha-avaliacao/{id}/")
+    public ResponseEntity<Object> minhaAvaliacaoAlbum(@PathVariable("id") Long id, @AuthenticationPrincipal Usuario usuario) {
+        try {
+            return ResponseEntity.ok().body(new MinhaAvaliacaoResponseDto(this.avaliacaoService.minhaNotaAlbum(id, usuario)));
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
@@ -99,7 +112,7 @@ public class AlbumController {
         }
     }
 
-    //SO ADMIN (VER ListAlbumController). A IMAGEM VAI NO CAMPO "arquivo" DE UM FORMULARIO MULTIPART
+    //SO ADMIN (VER SecurityConfiguration). A IMAGEM VAI NO CAMPO "arquivo" DE UM FORMULARIO MULTIPART
     @PostMapping(value = "/capa/{id}/", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> enviarCapa(@PathVariable("id") Long id, @RequestParam("arquivo") MultipartFile arquivo) {
         try {

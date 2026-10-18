@@ -1,5 +1,6 @@
 package com.gravadoracampista.infra.security;
 
+import com.gravadoracampista.exceptions.UnauthorizedException;
 import jakarta.servlet.DispatcherType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -32,6 +33,30 @@ public class SecurityConfiguration {
             "/midia/**"
     };
 
+    //ROTAS SO DE ADMIN, POR METODO. QUEM DECIDE E O SPRING SECURITY, QUE LE A ROTA IGUAL AOS CONTROLLERS
+    //(COMPARAR O TEXTO DA URL DEIXAVA PASSAR "/banda/%75pdate/1/", QUE O SPRING ENTENDE COMO "/banda/update/1/")
+    private static final String[] PUT_ROLE_ADMIN = {
+            "/banda/update/**",
+            "/album/update/**",
+            "/musica/update/**",
+            "/usuarios/update/**"
+    };
+    private static final String[] DELETE_ROLE_ADMIN = {
+            "/banda/delete/**",
+            "/album/delete/**",
+            "/musica/delete/**",
+            "/usuarios/delete/**",
+            "/banda/foto/**",
+            "/album/capa/**"
+    };
+    private static final String[] POST_ROLE_ADMIN = {
+            "/banda/foto/**",
+            "/album/capa/**"
+    };
+    private static final String[] GET_ROLE_ADMIN = {
+            "/usuarios/all"
+    };
+
     @Autowired
     @Qualifier("handlerExceptionResolver")
     private HandlerExceptionResolver exceptionResolver;
@@ -54,8 +79,16 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.OPTIONS, "/usuarios/**").permitAll()
                         .requestMatchers(HttpMethod.POST, POST_ROLE_ALLPERMIT).permitAll()
                         .requestMatchers(HttpMethod.GET, GET_ROLE_ALLPERMIT).permitAll()
+                        .requestMatchers(HttpMethod.PUT, PUT_ROLE_ADMIN).hasRole("ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.DELETE, DELETE_ROLE_ADMIN).hasRole("ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.POST, POST_ROLE_ADMIN).hasRole("ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.GET, GET_ROLE_ADMIN).hasRole("ADMINISTRADOR")
                         .anyRequest().authenticated()
                 )
+                //LOGADO SEM SER ADMIN: 401 COM MENSAGEM (O 403 FICA PARA TOKEN AUSENTE OU INVALIDO, QUE O FRONT TRATA COMO SESSAO EXPIRADA)
+                .exceptionHandling(exception -> exception.accessDeniedHandler((request, response, accessDeniedException) ->
+                        exceptionResolver.resolveException(request, response, null,
+                                new UnauthorizedException("Usuário não possui permissão de ADMIN"))))
                 .addFilterBefore(securityFilter(), UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

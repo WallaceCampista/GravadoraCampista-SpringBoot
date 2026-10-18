@@ -1,6 +1,7 @@
 package com.gravadoracampista.repository;
 
 import com.gravadoracampista.model.entities.Album;
+import com.gravadoracampista.model.entities.Banda;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,7 +13,8 @@ import java.util.Optional;
 @Repository
 public interface AlbumRepository extends JpaRepository<Album, Long> {
 
-  Optional<Album> findByNomeAlbumAndExcluidoFalse(String nomeAlbum);
+  //O NOME DO ALBUM SO PRECISA SER UNICO DENTRO DA BANDA
+  Optional<Album> findByNomeAlbumAndBandaAndExcluidoFalse(String nomeAlbum, Banda banda);
   List<Album> findByExcluidoFalse();
   Page<Album> findByNomeAlbumContainingAndExcluidoFalse(String nome, Pageable pageable);
 }

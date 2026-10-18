@@ -1,8 +1,5 @@
 package com.gravadoracampista.infra.security;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.interfaces.DecodedJWT;
-import com.gravadoracampista.exceptions.UnauthorizedException;
 import com.gravadoracampista.service.UsuarioService;
 import com.gravadoracampista.service.exceptions.userExceptions.UsernameNotFoundException;
 import jakarta.servlet.FilterChain;
@@ -48,19 +45,7 @@ public class SecurityFilter extends OncePerRequestFilter {
 
         if (idFuncional != null && !idFuncional.isEmpty()) {
 
-          // decodifica o JWT para acessar as claims
-          DecodedJWT jwt = JWT.decode(token);
-          Boolean isAdmin = jwt.getClaim("isAdmin").asBoolean();
-
-          // obtém a rota da solicitação já tratada
-          String requestRota = trataCaminhoParaFiltro(request.getRequestURI());
-
-          // verifica se a rota está na lista das restritas a administradores e se isAdm é false
-          if (RotasAcessoAdminMaster.getRotaAcessoAdmin().contains(requestRota) && (isAdmin == null || !isAdmin)) {
-            throw new UnauthorizedException("Usuário não possui permissão de ADMIN");
-          }
-
-
+          //O PERFIL (ADMIN OU NAO) VEM DO BANCO, NAO DO TOKEN: TIRAR O ADMIN DE ALGUEM VALE NA HORA
           UserDetails user = usuarioService.findUsuarioByidFuncional(idFuncional);
 
           var authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
@@ -72,42 +57,9 @@ public class SecurityFilter extends OncePerRequestFilter {
 
       filterChain.doFilter(request, response);
 
-    } catch (AccessDeniedException | UnauthorizedException | UsernameNotFoundException ex) {
+    } catch (AccessDeniedException | UsernameNotFoundException ex) {
       handlerExceptionResolver.resolveException(request, response, null, ex);
     }
-  }
-  private String trataCaminhoParaFiltro(String rota) {
-    if(rota .contains( "/banda/update/")){
-      rota = rota.split("/update/")[0] + "/update/";
-    }
-    if(rota .contains( "/banda/delete/")){
-      rota = rota.split("/delete/")[0] + "/delete/";
-    }
-    if(rota .contains( "/album/update/")){
-      rota = rota.split("/update/")[0] + "/update/";
-    }
-    if(rota .contains( "/album/delete/")){
-      rota = rota.split("/delete/")[0] + "/delete/";
-    }
-    if(rota .contains( "/musica/update/")){
-      rota = rota.split("/update/")[0] + "/update/";
-    }
-    if(rota .contains( "/musica/delete/")){
-      rota = rota.split("/delete/")[0] + "/delete/";
-    }
-    if(rota .contains( "/usuarios/update/")){
-      rota = rota.split("/update/")[0] + "/update/";
-    }
-    if(rota .contains( "/usuarios/delete/")){
-      rota = rota.split("/delete/")[0] + "/delete/";
-    }
-    if(rota .contains( "/banda/foto/")){
-      rota = rota.split("/foto/")[0] + "/foto/";
-    }
-    if(rota .contains( "/album/capa/")){
-      rota = rota.split("/capa/")[0] + "/capa/";
-    }
-    return rota;
   }
 
   private String recoverToken(HttpServletRequest request) {

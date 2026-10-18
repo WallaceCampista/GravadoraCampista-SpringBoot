@@ -4,7 +4,9 @@ import com.gravadoracampista.dtos.request.AvaliacaoRequestDto;
 import com.gravadoracampista.dtos.request.MusicaRequestDto;
 import com.gravadoracampista.dtos.response.MusicaResponseDto;
 import com.gravadoracampista.dtos.response.MusicaResponseFullDto;
+import com.gravadoracampista.dtos.response.MinhaAvaliacaoResponseDto;
 import com.gravadoracampista.exceptions.ResourceNotFoundException;
+import com.gravadoracampista.model.entities.Usuario;
 import com.gravadoracampista.service.AvaliacaoService;
 import com.gravadoracampista.service.MusicaService;
 import com.gravadoracampista.service.exceptions.allExceptions.CreateEntitiesException;
@@ -15,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -52,11 +55,21 @@ public class MusicaController {
     }
 
     @PostMapping("/avaliar-musica/{id}/")
-    public ResponseEntity<String> avaliarMusica(@PathVariable("id") Long id, @Valid @RequestBody AvaliacaoRequestDto request) {
+    public ResponseEntity<String> avaliarMusica(@PathVariable("id") Long id, @Valid @RequestBody AvaliacaoRequestDto request, @AuthenticationPrincipal Usuario usuario) {
         try {
-            double result = this.avaliacaoService.avaliarMusica(id, request);
+            double result = this.avaliacaoService.avaliarMusica(id, request, usuario);
             return ResponseEntity.ok("Nova média para musica: " +result);
         } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    //NOTA QUE O USUARIO LOGADO JA DEU (OU null), PARA O POPUP DE AVALIAR MOSTRAR "SUA NOTA"
+    @GetMapping("/minha-avaliacao/{id}/")
+    public ResponseEntity<Object> minhaAvaliacaoMusica(@PathVariable("id") Long id, @AuthenticationPrincipal Usuario usuario) {
+        try {
+            return ResponseEntity.ok().body(new MinhaAvaliacaoResponseDto(this.avaliacaoService.minhaNotaMusica(id, usuario)));
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }

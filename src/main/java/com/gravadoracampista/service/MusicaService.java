@@ -37,9 +37,9 @@ public class MusicaService {
     List<String> errorMessages = new ArrayList<>();
 
     //VALIDACOES DE REGRAS DE NEGOCIO
-    Optional<Musica> existingMusica= this.musicaRepository.findByNomeMusicaAndExcluidoFalse(musicaRequest.getNomeMusica());
+    Optional<Musica> existingMusica= this.musicaRepository.findByNomeMusicaAndAlbumIDAndExcluidoFalse(musicaRequest.getNomeMusica(), album);
     if (existingMusica.isPresent()) {
-      errorMessages.add("Essa musica já existe na gravadora.");
+      errorMessages.add("Esse álbum já tem uma música com esse nome.");
     }
 
     //VERIFICANDO SE A LISTA DE ERRO ESTA VAZIA. CASO CONTRARIO, RETORNA UMA EXCEÇÃO
@@ -71,9 +71,9 @@ public class MusicaService {
     Musica musica = getMusicaById(id);
     Album album = albumService.getAlbumById(request.getIdAlbum());
     List<String> errorMessages = new ArrayList<>();
-    Optional<Musica> existingMusica = this.musicaRepository.findByNomeMusicaAndExcluidoFalse(request.getNomeMusica());
+    Optional<Musica> existingMusica = this.musicaRepository.findByNomeMusicaAndAlbumIDAndExcluidoFalse(request.getNomeMusica(), album);
     if (existingMusica.isPresent() && !existingMusica.get().getMusicaId().equals(id)) {
-      errorMessages.add("Essa musica já existe na gravadora.");
+      errorMessages.add("Esse álbum já tem uma música com esse nome.");
     }
     if (!errorMessages.isEmpty()) {
       throw new CreateEntitiesException(errorMessages);

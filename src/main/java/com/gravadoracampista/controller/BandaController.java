@@ -4,7 +4,9 @@ import com.gravadoracampista.dtos.request.AvaliacaoRequestDto;
 import com.gravadoracampista.dtos.request.BandaRequestDto;
 import com.gravadoracampista.dtos.response.BandaResponseDto;
 import com.gravadoracampista.dtos.response.BandaResponseFullDto;
+import com.gravadoracampista.dtos.response.MinhaAvaliacaoResponseDto;
 import com.gravadoracampista.exceptions.ResourceNotFoundException;
+import com.gravadoracampista.model.entities.Usuario;
 import com.gravadoracampista.service.AvaliacaoService;
 import com.gravadoracampista.service.BandaService;
 import com.gravadoracampista.service.exceptions.allExceptions.CreateEntitiesException;
@@ -16,6 +18,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -54,11 +57,21 @@ public class BandaController {
     }
 
     @PostMapping("/avaliar-banda/{id}/")
-    public ResponseEntity<String> avaliarBanda(@PathVariable("id") Long id, @Valid @RequestBody AvaliacaoRequestDto request) {
+    public ResponseEntity<String> avaliarBanda(@PathVariable("id") Long id, @Valid @RequestBody AvaliacaoRequestDto request, @AuthenticationPrincipal Usuario usuario) {
         try {
-            double result = this.avaliacaoService.avaliarBanda(id, request);
+            double result = this.avaliacaoService.avaliarBanda(id, request, usuario);
             return ResponseEntity.ok("Nova média para banda: " +result);
         } catch (CreateEntitiesException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    //NOTA QUE O USUARIO LOGADO JA DEU (OU null), PARA O POPUP DE AVALIAR MOSTRAR "SUA NOTA"
+    @GetMapping("/minha-avaliacao/{id}/")
+    public ResponseEntity<Object> minhaAvaliacaoBanda(@PathVariable("id") Long id, @AuthenticationPrincipal Usuario usuario) {
+        try {
+            return ResponseEntity.ok().body(new MinhaAvaliacaoResponseDto(this.avaliacaoService.minhaNotaBanda(id, usuario)));
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
@@ -99,7 +112,7 @@ public class BandaController {
         }
     }
 
-    //SO ADMIN (VER ListBandaController). A IMAGEM VAI NO CAMPO "arquivo" DE UM FORMULARIO MULTIPART
+    //SO ADMIN (VER SecurityConfiguration). A IMAGEM VAI NO CAMPO "arquivo" DE UM FORMULARIO MULTIPART
     @PostMapping(value = "/foto/{id}/", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> enviarFoto(@PathVariable("id") Long id, @RequestParam("arquivo") MultipartFile arquivo) {
         try {
